@@ -1,0 +1,75 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <DHT.h>
+
+// ===== LCD SETUP =====
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+// ===== PIN DEFINITIONS =====
+#define MQ135_PIN A0
+#define MQ7_PIN   A1
+#define DHTPIN    2
+#define DHTTYPE   DHT11
+#define BUZZER    3
+
+// ===== DHT SETUP =====
+DHT dht(DHTPIN, DHTTYPE);
+
+// Threshold values
+int mq135_threshold = 300;
+int mq7_threshold   = 200;
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(BUZZER, OUTPUT);
+
+  // LCD INIT
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("E-Waste Monitor");
+
+  dht.begin();
+
+  delay(2000);
+  lcd.clear();
+}
+
+void loop() {
+
+  int mq135 = analogRead(MQ135_PIN);
+  int mq7   = analogRead(MQ7_PIN);
+
+  float temp = dht.readTemperature();
+  float hum  = dht.readHumidity();
+
+  Serial.print("MQ135: ");
+  Serial.print(mq135);
+  Serial.print(" | MQ7: ");
+  Serial.print(mq7);
+  Serial.print(" | Temp: ");
+  Serial.print(temp);
+  Serial.print(" | Hum: ");
+  Serial.println(hum);
+
+  lcd.setCursor(0, 0);
+  lcd.print("CO:");
+  lcd.print(mq7);
+  lcd.print(" AQ:");
+  lcd.print(mq135);
+
+  lcd.setCursor(0, 1);
+  lcd.print("T:");
+  lcd.print(temp);
+  lcd.print(" H:");
+  lcd.print(hum);
+
+  if (mq135 > mq135_threshold || mq7 > mq7_threshold) {
+    digitalWrite(BUZZER, HIGH);
+  } else {
+    digitalWrite(BUZZER, LOW);
+  }
+
+  delay(2000);
+}
